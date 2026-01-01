@@ -1,0 +1,148 @@
+import { Boom } from "@hapi/boom";
+import NodeCache from "@cacheable/node-cache";
+import readline from "readline";
+import P from "pino";
+import makeWASocket, {
+  AnyMessageContent,
+  CacheStore,
+  delay,
+  DisconnectReason,
+  fetchLatestBaileysVersion,
+  getAggregateVotesInPollMessage,
+  isJidNewsletter,
+  makeCacheableSignalKeyStore,
+  proto,
+  useMultiFileAuthState,
+  WAMessageContent,
+  WAMessageKey,
+} from "@whiskeysockets/baileys";
+import { log } from "console";
+
+const logger = P({
+  level: "trace",
+  transport: {
+    targets: [
+      {
+        target: "pino-pretty", // pretty-print for console
+        options: { colorize: true },
+        level: "trace",
+      },
+      {
+        target: "pino/file", // raw file output
+        options: { destination: "./wa-logs.txt" },
+        level: "trace",
+      },
+    ],
+  },
+});
+logger.level = "trace";
+
+const doReplies = true;
+const usePairingCode = true;
+const PHONE_NUMBER = "27612266700";
+
+// external map to store retry counts of messages when decryption/encryption fails
+// keep this out of the socket itself, so as to prevent a message decryption/encryption loop across socket restarts
+const msgRetryCounterCache = new NodeCache() as CacheStore;
+
+// Read line interface
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+const question = (text: string) =>
+  new Promise<string>((resolve) => rl.question(text, resolve));
+
+// start a connection
+async function startBot() {
+  const { state, saveCreds } = await useMultiFileAuthState("auth");
+
+  const sock = makeWASocket({
+    auth: state,
+    printQRInTerminal: false, // Keep this false for pairing codes
+    logger: P({ level: "info" }),
+    browser: ["Ubuntu", "Chrome", "20.0.04"],
+  });
+
+  sock.ev.on("creds.update", saveCreds);
+
+  // Listen for incoming messages
+  sock.ev.on("messages.upsert", async (m) => {
+    // 'notify' means it's a new message notification
+    if (m.type === "notify") {
+      for (const msg of m.messages) {
+        // Check if the message has text content
+        const messageText = (
+          msg.message?.conversation || msg.message?.extendedTextMessage?.text
+        )?.toLowerCase();
+
+        const from = msg.key.remoteJid;
+
+        const isInstagramReel = messageText?.includes("instagram.com");
+        const isYoutubeShort = messageText?.includes("youtube.com/shorts/");
+
+        if (isInstagramReel || isYoutubeShort) {
+          console.log("FILTERING BANNED CONTENT");
+
+          await sock.chatModify(
+            {
+              deleteForMe: {
+                key: msg.key,
+                deleteMedia: true,
+                timestamp: Number(msg.messageTimestamp),
+              },
+            },
+            from!,
+          );
+
+          await sock.sendMessage(from!, {
+            text: `The recipient was unable to receive this message. 
+
+https://www.sciencedirect.com/science/article/pii/S2405844024063771
+https://pmc.ncbi.nlm.nih.gov/articles/PMC11066677/
+https://www.youtube.com/watch?v=d43tivfx0qw`,
+          });
+        }
+      }
+    }
+  });
+
+  sock.ev.on("connection.update", async (update) => {
+    const { connection, lastDisconnect } = update;
+
+    if (connection === "close") {
+      console.log("CONNECTION IS CLOSED, ATTEMPTING TO RECONNECT...");
+
+      //not logged out
+      const shouldReconnect =
+        (lastDisconnect?.error as any)?.output?.statusCode !==
+        DisconnectReason.loggedOut;
+      if (shouldReconnect) startBot();
+    } else if (connection === "open") {
+      console.log("✅ Connection fully open!");
+    }
+  });
+
+  // --- PAIRING CODE LOGIC ---
+  // We check if we are registered. If not, we wait for the socket to stabilize.
+  if (!sock.authState.creds.registered) {
+    // IMPORTANT: The number MUST be digits only. No '+'.
+
+    console.log(
+      `Waiting for registration system to initialize for ${PHONE_NUMBER}...`,
+    );
+
+    // This delay prevents the "Connection Closed" error/hang
+    setTimeout(async () => {
+      try {
+        const code = await sock.requestPairingCode(PHONE_NUMBER);
+        console.log(`\n--------------------------`);
+        console.log(`YOUR PAIRING CODE: ${code}`);
+        console.log(`--------------------------\n`);
+      } catch (error) {
+        console.error("Critical error requesting pairing code:", error);
+      }
+    }, 5000); // 5 second delay
+  }
+}
+startBot();
