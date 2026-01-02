@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "esrun index.ts",
     "build": "rollup --config rollup.config.ts --configPlugin typescript",
-    "start": "node index.js"
+    "start": "node app/index.js"
   },
   "dependencies": {
     "@hapi/boom": "^10.0.1",
