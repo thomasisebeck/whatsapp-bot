@@ -1,12 +1,10 @@
-import NodeCache from "@cacheable/node-cache";
-import readline from "readline";
-import P from "pino";
+import { pino } from "pino";
 import makeWASocket, {
   DisconnectReason,
   useMultiFileAuthState,
 } from "@whiskeysockets/baileys";
 
-const logger = P({
+const logger = pino({
   level: "trace",
   transport: {
     targets: [
@@ -27,12 +25,6 @@ logger.level = "trace";
 
 const PHONE_NUMBER = "27612266700";
 
-// Read line interface
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
-
 // start a connection
 async function startBot() {
   const { state, saveCreds } = await useMultiFileAuthState("auth");
@@ -40,7 +32,7 @@ async function startBot() {
   const sock = makeWASocket({
     auth: state,
     printQRInTerminal: false, // Keep this false for pairing codes
-    logger: P({ level: "info" }),
+    logger: pino({ level: "info" }),
     browser: ["Ubuntu", "Chrome", "20.0.04"],
   });
 
