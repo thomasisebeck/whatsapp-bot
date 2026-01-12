@@ -1,6 +1,5 @@
 import typescript from "@rollup/plugin-typescript";
 import terser from "@rollup/plugin-terser";
-import copy from "rollup-plugin-copy";
 
 export default {
   input: "src/index.ts", // Entry point for the bundle (main TypeScript file)
@@ -13,9 +12,6 @@ export default {
     terser(), // Use terser for minification to make the bundle smaller
     typescript({
       tsconfig: "./tsconfig.json", // Use this tsconfig file to configure TypeScript compilation
-    }),
-    copy({
-      targets: [{ src: "package.json", dest: "dist" }],
     }),
   ],
 };

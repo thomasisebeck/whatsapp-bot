@@ -50,10 +50,39 @@ async function startService() {
 
         const from = msg.key.remoteJid;
 
-        const isInstagramReel = messageText?.includes("instagram.com");
+        const isInstagramReel = messageText?.includes("instagram.com/reel/");
         const isYoutubeShort = messageText?.includes("youtube.com/shorts/");
 
-        if (isInstagramReel || isYoutubeShort) {
+        const quotes = [
+          "Time isn’t the main thing. It’s the only thing.",
+          "Take a deep breath.",
+          "How we spend our days, is, of course, how we spend our lives.",
+          "This minute is yours.",
+          "You’re allowed to be bored.",
+          "Your thumb is working harder than your brain.",
+          "Choose presence.",
+          "Choose intention.",
+          "Choose depth.",
+          "Choose focus.",
+          "Choose stillness.",
+          "Just checking in with reality.",
+          "Still here? Take a breath.",
+          "Plot twist: there’s another reel after this.",
+          "Your future self says hi.",
+          "Take a moment. Notice your breathing.",
+          "Check in with your posture.",
+          "Slow your breathing, just a little.",
+          "Feel your feet on the ground.",
+          "Notice the room around you.",
+          "You’re here.",
+          "Take one conscious breath.",
+        ];
+
+        const isAware = messageText?.toLowerCase().includes("i am aware");
+
+        if ((isInstagramReel || isYoutubeShort) && !isAware) {
+          const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+
           console.log("FILTERING BANNED CONTENT");
 
           await sock.chatModify(
@@ -68,7 +97,7 @@ async function startService() {
           );
 
           await sock.sendMessage(from!, {
-            text: `The recipient was unable to receive this message. 
+            text: `"${randomQuote}"
 
 https://www.sciencedirect.com/science/article/pii/S2405844024063771
 https://pmc.ncbi.nlm.nih.gov/articles/PMC11066677/

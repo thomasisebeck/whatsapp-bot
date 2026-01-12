@@ -24,6 +24,7 @@
     "@rollup/plugin-url": "^8.0.2",
     "esrun": "^3.2.30",
     "rollup": "^4.54.0",
+    "rollup-plugin-copy": "^3.5.0",
     "typescript": "^5.9.3"
   }
 }
