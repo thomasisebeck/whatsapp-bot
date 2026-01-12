@@ -53,6 +53,33 @@ async function startService() {
         const isInstagramReel = messageText?.includes("instagram.com/reel/");
         const isYoutubeShort = messageText?.includes("youtube.com/shorts/");
 
+        const jokes = [
+          "I asked my dog what’s two minus two. He said nothing.",
+          "I would tell you a joke about time travel, but you didn’t like it.",
+          "I’m on a seafood diet. I see food and I eat it.",
+          "Why don’t eggs tell jokes? They’d crack each other up.",
+          "Why did the coffee file a police report? It got mugged.",
+          "Why don’t oysters donate to charity? Because they’re shellfish.",
+          "Why do cows wear bells? Because their horns don’t work.",
+          "I asked the gym instructor if he could teach me to do the splits. He said, ‘How flexible are you?’ I said, ‘I can’t make Tuesdays.’",
+          "Why did the developer go broke? Because he used up all his cache.",
+          "I used to be addicted to soap. But I’m clean now.",
+          "Why did the invisible man turn down the job offer? He couldn’t see himself doing it.",
+          "I started a band called 999MB. We still haven’t gotten a gig.",
+          "Why did the man put his money in the freezer? He wanted cold hard cash.",
+          "The future, the present, and the past walked into a bar. It was tense.",
+          "I stayed up all night to see where the sun went. Then it dawned on me.",
+          "A Buddhist monk approaches a burger truck and says, ‘Make me one with everything.’",
+          "I poured root beer into a square cup. Now I just have beer.",
+          "Two antennas met on a roof, fell in love — the reception was excellent.",
+          "Are people born with photographic memories, or does it take time to develop?",
+          "A book fell on my head. I only have my shelf to blame.",
+          "I can tell when people are judgmental just by looking at them.",
+          "I told my wife she should embrace her mistakes — she gave me a hug.",
+          "I told a chemistry joke… but there was no reaction.",
+          "Why did the librarian get kicked out of the party? She kept checking everyone out!",
+        ];
+
         const quotes = [
           "Time isn’t the main thing. It’s the only thing.",
           "Take a deep breath.",
@@ -79,6 +106,17 @@ async function startService() {
         ];
 
         const isAware = messageText?.toLowerCase().includes("i am aware");
+
+        const isJoke = messageText?.toLowerCase().includes("joke");
+
+        if (isJoke) {
+          const randomJoke = jokes[Math.floor(Math.random() * jokes.length)];
+          await sock.sendMessage(from!, {
+            text: `Did someone say joke?
+
+${randomJoke}`,
+          });
+        }
 
         if ((isInstagramReel || isYoutubeShort) && !isAware) {
           const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
